@@ -93,8 +93,10 @@ describe 'tpm' do
               it { is_expected.not_to create_class('tpm::ima') }
               it { is_expected.not_to create_class('tpm::tpm2::ownership') }
               it { is_expected.to create_class('tpm::tpm2::install') }
-              it { is_expected.to contain_package('tpm2-tools').with_ensure('installed') }
-              it { is_expected.to contain_package('tpm2-tss').with_ensure('installed') }
+              it { is_expected.to contain_package('simp-tpm2-tools').with_ensure('installed') }
+              it { is_expected.to contain_package('simp-tpm2-tss').with_ensure('installed') }
+              it { is_expected.to contain_package('simp-tpm2-abrmd').with_ensure('installed') }
+              it { is_expected.to contain_package('simp-tpm2-abrmd-selinux').with_ensure('installed') }
               it { is_expected.to contain_service('resourcemgr').with({
                 'ensure'  => 'running',
                 'enable'  => true,
@@ -117,8 +119,10 @@ describe 'tpm' do
               it { is_expected.not_to create_class('tpm::ima') }
               it { is_expected.to create_class('tpm::tpm2::ownership') }
               it { is_expected.to create_class('tpm::tpm2::install') }
-              it { is_expected.to contain_package('tpm2-tools').with_ensure('installed') }
-              it { is_expected.to contain_package('tpm2-tss').with_ensure('installed') }
+              it { is_expected.to contain_package('simp-tpm2-tools').with_ensure('installed') }
+              it { is_expected.to contain_package('simp-tpm2-tss').with_ensure('installed') }
+              it { is_expected.to contain_package('simp-tpm2-abrmd').with_ensure('installed') }
+              it { is_expected.to contain_package('simp-tpm2-abrmd-selinux').with_ensure('installed') }
               it { is_expected.to contain_service('resourcemgr').with({
                 'ensure'  => 'running',
                 'enable'  => true,

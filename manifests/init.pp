@@ -11,8 +11,7 @@
 #
 # @param package_ensure The ensure status of packages to be installed
 #
-# @author Nick Markowski <nmarkowski@keywcorp.com>
-# @author Nick Miller <nick.miller@onyxpoint.com>
+# @author SIMP Team https://simp-project.com
 #
 class tpm (
   Boolean                $ima            = false,
@@ -30,6 +29,11 @@ class tpm (
       'tpm2':   { include '::tpm::tpm2::install' }
       default:  { warning("${module_name}: TPM version - ${tpm_version} - is unknown or not supported.") }
     }
+  }
+  # If facter doesn't detect a hardware TPM device, but TPM 2.0 has been
+  # specified, then 
+  elsif $tpm_version == 'tpm2' {
+    include '::tpm::tpm2::install'
   }
 
   if $ima {

@@ -108,15 +108,6 @@ RSpec.configure do |c|
     c.backtrace_clean_patterns = backtrace_exclusion_patterns
   end
 
-  c.before(:all) do
-    data = YAML.load(default_hiera_config)
-    data[:yaml][:datadir] = File.join(fixture_path, 'hieradata')
-
-    File.open(c.hiera_config, 'w') do |f|
-      f.write data.to_yaml
-    end
-  end
-
   c.before(:each) do
     @spec_global_env_temp = Dir.mktmpdir('simpspec')
 
@@ -129,6 +120,12 @@ RSpec.configure do |c|
     Puppet[:environmentpath] = @spec_global_env_temp
     Puppet[:user] = Etc.getpwuid(Process.uid).name
     Puppet[:group] = Etc.getgrgid(Process.gid).name
+
+    if ENV.fetch('DEBUG','no') == 'yes'
+      Puppet.debug=true
+      Puppet::Util::Log.level = :debug
+      Puppet::Util::Log.newdestination(:console)
+    end
 
     # sanitize hieradata
     if defined?(hieradata)

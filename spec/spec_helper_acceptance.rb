@@ -16,6 +16,25 @@ unless ENV['BEAKER_provision'] == 'no'
 end
 
 
+def install_tpm2_0_tools
+  # install any rpm files in the top-level directory to tmp
+  rpm_staging_dir = "/root/rpms.#{$$}"
+  extra_file=<<-SYSTEMD.gsub(/^\s*/,'')
+  [Service]
+  ExecStart=
+  ExecStart=/usr/local/sbin/tpm2-abrmd -t socket
+  SYSTEMD
+
+  on hosts, "mkdir -p #{rpm_staging_dir}"
+  Dir['*.rpm'].each{ |f| scp_to(hosts,f,rpm_staging_dir) }
+  on hosts, "yum install -y #{rpm_staging_dir}/*.rpm"
+  on hosts, 'runuser tpm2sim --shell /bin/sh -c "cd /tmp; nohup /usr/local/bin/tpm2-simulator &"', pty: true, run_in_parallel: true
+  on hosts, 'mkdir -p /etc/systemd/system/tpm2-abrmd.service.d'
+  create_remote_file hosts, '/etc/systemd/system/tpm2-abrmd.service.d/override.conf', extra_file
+  on hosts, 'systemctl daemon-reload'
+  on hosts, 'systemctl start tpm2-abrmd'
+end
+
 RSpec.configure do |c|
   # ensure that environment OS is ready on each host
   fix_errata_on hosts
@@ -26,6 +45,7 @@ RSpec.configure do |c|
   # Configure all nodes in nodeset
   c.before :suite do
     begin
+
       # Install modules and dependencies from spec/fixtures/modules
       copy_fixture_modules_to( hosts )
       begin

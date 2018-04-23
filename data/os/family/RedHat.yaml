@@ -1,0 +1,6 @@
+---
+tpm::tpm2::install::package_list:
+  - simp-tpm2-tss
+  - simp-tpm2-abrmd-selinux
+  - simp-tpm2-abrmd
+  - simp-tpm2-tools
