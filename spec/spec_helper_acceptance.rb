@@ -28,7 +28,7 @@ def install_tpm2_0_tools
   on hosts, "mkdir -p #{rpm_staging_dir}"
   Dir['*.rpm'].each{ |f| scp_to(hosts,f,rpm_staging_dir) }
   on hosts, "yum install -y #{rpm_staging_dir}/*.rpm"
-  on hosts, 'runuser tpm2sim --shell /bin/sh -c "cd /tmp; nohup /usr/local/bin/tpm2-simulator &"', pty: true, run_in_parallel: true
+  on hosts, 'runuser tpm2sim --shell /bin/sh -c "cd /tmp; nohup /usr/local/bin/tpm2-simulator &> /tmp/tpm2-simulator.log &"', pty: true, run_in_parallel: true
   on hosts, 'mkdir -p /etc/systemd/system/tpm2-abrmd.service.d'
   create_remote_file hosts, '/etc/systemd/system/tpm2-abrmd.service.d/override.conf', extra_file
   on hosts, 'systemctl daemon-reload'
