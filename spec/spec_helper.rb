@@ -22,17 +22,17 @@ if !ENV.key?( 'TRUSTED_NODE_DATA' )
   ENV['TRUSTED_NODE_DATA']='yes'
 end
 
-default_hiera_config =<<-EOM
----
-:backends:
-  - "yaml"
-:yaml:
-  :datadir: "stub"
-:hierarchy:
-  - "%{custom_hiera}"
-  - "%{module_name}"
-  - "default"
-EOM
+### default_hiera_config =<<-EOM
+### ---
+### :backends:
+###   - "yaml"
+### :yaml:
+###   :datadir: "stub"
+### :hierarchy:
+###   - "%{custom_hiera}"
+###   - "%{module_name}"
+###   - "default"
+### EOM
 
 # This can be used from inside your spec tests to set the testable environment.
 # You can use this to stub out an ENC.

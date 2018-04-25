@@ -4,20 +4,17 @@ module Facter
       attr_accessor :result
 
       def initialize
-        @sys_path = sys_path
-        @tpm2_tools_paths = 
+        @sys_path = Facter::TPM2::Util.tpm2_tools_prefix
+        @tpm2_tools_paths = ''
 
         @result = {
-          'sys_path' => sys_path,
-          'version'  => version,
-          'status'   => status
+          'sys_path' => @sys_path,
         }
-
-        @result['pubek'] = pubek(@result['status'])
       end
 
 
-      def self.tpm2_tools_prefix(paths=['/usr/bin', '/usr/local/bin'])
+      # Look for tpm2-tools under /usr/local and /usr, preferring /usr/local
+      def self.tpm2_tools_prefix(paths=['/usr/local/bin', '/usr/bin'])
         _cmd = 'tpm2_pcrlist'
         tpm2_bin_path = nil
         paths.each do |_path|
