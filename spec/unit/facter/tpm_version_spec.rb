@@ -5,16 +5,17 @@ describe 'tpm_version', :type => :fact do
   before :each do
     Facter.clear
     Facter.clear_messages
-    Facter.fact(:has_tpm).stubs(:value).returns(true)
+    # This allow argument seems really wrong and I don't understand it works yet
+    allow(Facter.fact(:has_tpm)).to receive(:value).and_return true
   end
 
   context 'the link exists' do
     before(:each) {
-      Dir.stubs(:glob).with('/sys/class/tpm/tpm*').returns ['/tpm0']
-      File.stubs(:symlink?).with('/tpm0').returns true
+      allow(Dir).to receive(:glob).with('/sys/class/tpm/tpm*').and_return ['/tpm0']
+      allow(File).to receive(:symlink?).with('/tpm0').and_return true
     }
     it 'should return tpm2 if MSFT is in the link name' do
-      File.stubs(:readlink).with('/tpm0').returns '../xyz/MSFT00049/foo/bar'
+      allow(File).to receive(:readlink).with('/tpm0').and_return '../xyz/MSFT00049/foo/bar'
       expect(Facter.fact(:tpm_version).value).to eq  'tpm2'
     end
 

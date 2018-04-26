@@ -26,21 +26,22 @@ Facter.add('has_tpm') do
     #   `/dev/tpmrm`, typically `/dev/tpmrm0`.
     result = File.exists?('/dev/tpm0')
 
-    unless result
-      # Testing for
-      _cmd = 'tpm2_pcrlist'
-      tpm2_bin_paths = []
-      ['/usr/bin', '/usr/local/bin'].each do |_path|
-        if File.executable? File.join( _path, _cmd )
-          tpm2_bin_paths << _path
-        end
-      end
+    ### Commented out for testing: not needed
+    ###unless result
+    ###  # Testing for
+    ###  _cmd = 'tpm2_pcrlist'
+    ###  tpm2_bin_paths = []
+    ###  ['/usr/bin', '/usr/local/bin'].each do |_path|
+    ###    if File.executable? File.join( _path, _cmd )
+    ###      tpm2_bin_paths << _path
+    ###    end
+    ###  end
 
-      unless tpm2_bin_paths.empty?
-        x = Facter::Core::Execution.execute File.join(tpm2_bin_paths.first ,'tpm2_pcrlist -s')
-        result = (x =~ %r{^Supported Bank/Algorithm:} ? true : false)
-      end
-    end
+    ###  unless tpm2_bin_paths.empty?
+    ###    x = Facter::Core::Execution.execute File.join(tpm2_bin_paths.first ,'tpm2_pcrlist -s')
+    ###    result = (x =~ %r{^Supported Bank/Algorithm:} ? true : false)
+    ###  end
+    ###end
 
     result
   end

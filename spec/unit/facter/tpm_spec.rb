@@ -1,5 +1,4 @@
 require 'spec_helper'
-require 'pry'
 
 describe 'tpm', :type => :fact do
   before :each do
@@ -9,35 +8,35 @@ describe 'tpm', :type => :fact do
 
   context 'has_tpm fact is false' do
     it 'should return nil' do
-      Facter.fact(:has_tpm).stubs(:value).returns(false)
+      allow(Facter.fact(:tpm)).to receive(:value).and_return nil
       expect(Facter.fact(:tpm).value).to eq nil
     end
   end
 
   context 'has_tpm fact is true, but tpm-tools package is not installed' do
     it 'should return nil' do
-      Facter.fact(:has_tpm).stubs(:value).returns(true)
-      Facter.fact(:tpm_version).stubs(:value).returns('tpm1')
-      Facter::Core::Execution.stubs(:which).with('tpm_version').returns nil
+      allow(Facter.fact(:has_tpm)).to receive(:value).and_return true
+      allow(Facter.fact(:tpm_version)).to receive(:value).and_return 'tpm1'
+      allow(Facter::Core::Execution).to receive(:which).with('tpm_version').and_return nil
       expect(Facter.fact(:tpm).value).to eq nil
     end
   end
 
   context 'tpm is enabled and unowned' do
     before(:each) do
-      Facter.fact(:has_tpm).stubs(:value).returns(true)
-      Facter.fact(:tpm_version).stubs(:value).returns('tpm1')
-      Facter::Core::Execution.stubs(:which).with('txt-stat').returns nil
+      allow(Facter.fact(:has_tpm)).to receive(:value).and_return true
+      allow(Facter.fact(:tpm_version)).to receive(:value).and_return 'tpm1'
+      allow(Facter::Core::Execution).to receive(:which).with('txt-stat').and_return nil
 
       # Just need something that actually exists on the current FS
-      Facter::Core::Execution.stubs(:which).with('tpm_version').returns Dir.pwd
+      allow(Facter::Core::Execution).to receive(:which).with('tpm_version').and_return Dir.pwd
     end
 
     it 'should be a structured fact with the prescribed structure' do
       require 'facter/tpm/util'
 
       fact = Facter::TPM::Util.new('spec/files/tpm')
-      Facter::TPM::Util.stubs(:new).with('/sys/class/tpm/tpm0').returns fact
+      allow(Facter::TPM::Util).to receive(:new).with('/sys/class/tpm/tpm0').and_return fact
       expect(Facter.fact(:tpm).value).to include('status','version','pubek','sys_path')
     end
   end
@@ -47,9 +46,7 @@ describe 'tpm', :type => :fact do
   describe Facter::TPM::Util do
 
     before(:each) do
-      Facter::Core::Execution.stubs(:execute).with('tpm_version', :timeout => 15).returns File.read('spec/files/tpm/tpm_version.txt')
-
-
+      allow(Facter::Core::Execution).to receive(:execute).with('tpm_version', :timeout => 15).and_return(File.read('spec/files/tpm/tpm_version.txt'))
       @tpm_fact = Facter::TPM::Util.new('spec/files/tpm')
     end
 
@@ -57,7 +54,7 @@ describe 'tpm', :type => :fact do
       context 'with a well-known owner password' do
         it 'should return the results from the tpm_getpubek command' do
           out = File.read('spec/files/tpm/tpm_getpubek.txt')
-          Facter::Core::Execution.stubs(:execute).with('tpm_getpubek -z', :timeout => 15).returns out
+          allow(Facter::Core::Execution).to receive(:execute).with('tpm_getpubek -z', :timeout => 15).and_return out
 
           expect(@tpm_fact.send(:get_pubek_owned, 'well-known')).to eq out
         end
@@ -74,7 +71,7 @@ describe 'tpm', :type => :fact do
     describe '.get_pubek_unowned' do
       it 'should return the results from the tpm_getpubek command' do
         out = File.read('spec/files/tpm/tpm_getpubek.txt')
-        Facter::Core::Execution.stubs(:execute).with('tpm_getpubek', :timeout => 15).returns out
+        allow(Facter::Core::Execution).to receive(:execute).with('tpm_getpubek', :timeout => 15).and_return out
         expect(@tpm_fact.send(:get_pubek_unowned)).to eq out
       end
     end
@@ -82,7 +79,7 @@ describe 'tpm', :type => :fact do
     describe '.tpm_version' do
       it 'should return the value of the command' do
         out = File.read('spec/files/tpm/tpm_version.txt')
-        Facter::Core::Execution.stubs(:execute).with('tpm_version', :timeout => 15).returns out
+        allow(Facter::Core::Execution).to receive(:execute).with('tpm_version', :timeout => 15).and_return out
         expect(@tpm_fact.send(:tpm_version)).to eq out
       end
     end
@@ -90,7 +87,7 @@ describe 'tpm', :type => :fact do
     describe '.version' do
       context 'tpm_version exists' do
         before(:each) do
-          @tpm_fact.stubs(:tpm_version).returns File.read('spec/files/tpm/tpm_version.txt')
+          allow(@tpm_fact).to receive(:tpm_version).and_return File.read('spec/files/tpm/tpm_version.txt')
         end
         it 'should have _status with a positive message' do
           expect(@tpm_fact.send(:version)).to include('_status' => 'tpm_version loaded correctly')
@@ -108,7 +105,7 @@ describe 'tpm', :type => :fact do
       end
       context '.tpm_version does not exist' do
         before(:each) do
-          @tpm_fact.stubs(:tpm_version).returns nil
+          allow(@tpm_fact).to receive(:tpm_version).and_return nil
         end
         it 'should output as expected' do
           expect(@tpm_fact.send(:version)).to eq({"_status" => "Trousers is not running"})
@@ -154,7 +151,7 @@ describe 'tpm', :type => :fact do
 
       context 'tpm is not owned' do
         before(:each) do
-          @tpm_fact.stubs(:get_pubek_unowned).returns File.read('spec/files/tpm/tpm_getpubek.txt')
+          allow(@tpm_fact).to receive(:get_pubek_unowned).and_return File.read('spec/files/tpm/tpm_getpubek.txt')
         end
         let(:params) {{ 'enabled' => 1, 'owned' => 0 }}
 
@@ -178,9 +175,10 @@ describe 'tpm', :type => :fact do
 
       context 'tpm is owned' do
         before(:each) do
-          @tpm_fact.stubs(:get_pubek_owned).returns File.read('spec/files/tpm/tpm_getpubek.txt')
-          File.stubs(:exists?).with('/dev/null/simp/tpm_ownership_owner_pass').returns true
-          Facter::Core::Execution.stubs(:execute).with('cat /dev/null/simp/tpm_ownership_owner_pass 2> /dev/null').returns 'twentycharacters0000'
+          allow(@tpm_fact).to receive(:get_pubek_owned).and_return File.read('spec/files/tpm/tpm_getpubek.txt')
+          allow(Facter::Core::Execution).to receive(:execute).with('cat /dev/null/simp/tpm_ownership_owner_pass 2> /dev/null').and_return('twentycharacters0000')
+          allow(File).to receive(:exists?).with('/dev/null/simp/tpm_ownership_owner_pass').and_return true
+
         end
         let(:params) {{ 'enabled' => 1, 'owned' => 1 }}
 
