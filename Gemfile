@@ -15,6 +15,8 @@ group :test do
   gem 'puppetlabs_spec_helper'
   gem 'metadata-json-lint'
   gem 'puppet-strings'
+  gem 'redcarpet'
+  gem 'github-markup'
   gem 'puppet-lint-empty_string-check',   :require => false
   gem 'puppet-lint-trailing_comma-check', :require => false
   gem 'simp-rspec-puppet-facts', ENV.fetch('SIMP_RSPEC_PUPPET_FACTS_VERSION', '~> 2.0')
