@@ -1,5 +1,5 @@
 # A strucured fact that return some facts about a TPM 2.0 TPM
-Facter.add('tpm') do
+Facter.add('tpm2') do
   # This line is intentionally commented out.
   # With TPM 2.0 and TCTI, the TPM device may not be local. This makes the
   # :has_tpm detection strategy used for TPM 1 unreliable.
@@ -10,11 +10,12 @@ Facter.add('tpm') do
   # The fact will still be nil if the tpm2-tools aren't available or aren't
   # configured to comminucate with the TPM
   confine :tpm_version do |value|
-    value != 'tpm1'
+    value.nil? || value != 'tpm1'
   end
   setcode do
     require 'facter/tpm2/util'
-    Facter::TPM2::Util.new.build_structured_fact
+    result = Facter::TPM2::Util.new.build_structured_fact
+    result
   end
 end
 

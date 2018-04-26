@@ -26,37 +26,47 @@ class Facter::TPM2::Util
     Facter::Core::Execution.execute(File.join(@prefix, cmd))
   end
 
-  # Converts an unsigned Integer to String characters
-  #
-  # This is intended to decode TPM2 strings that are returned as uint32s, such
-  # as `TPM_PT_MANUFACTURER`.
+  # Translate the TPM_PT_MANUFACTURER number into the TCG-registered ID strings
+  #   (registry at: https://trustedcomputinggroup.org/vendor-id-registry/)
   #
   # @parame [Numeric] number to decode
   # @return [String] the decoded String
-  def uint32_to_s(num)
+  def decode_uint32_string(num)
     # rubocop:disable Style/FormatStringToken
-    format('%x', num).scan(/.{2}/).map { |x| x.hex.chr }.join
+    # NOTE: only strip "\x00" from the end of strings; some registered
+    # identifiers include trailing spaces (e.g., 'NSM ')!
+    ('%x' % num).scan(/.{2}/).map { |x| x.hex.chr }.join.gsub(/\x00*$/,'')
     # rubocop:enable Style/FormatStringToken
+  end
+
+  # Converts two unsigned Integers in a 4-part version string
+  def tpm2_firmware_version(tpm_pt_firmware_version_1,tpm_pt_firmware_version_2)
+    # rubocop:disable Style/FormatStringToken
+    s1 = ('%x' % tpm_pt_firmware_version_1).rjust(8,'0')
+    s2 = ('%x' % tpm_pt_firmware_version_2).rjust(8,'0')
+    # rubocop:enable Style/FormatStringToken
+    (s1.scan(/.{4}/) + s2.scan(/.{4}/)).map{|x| x.hex }.join('.')
   end
 
   # When in failure mode, the TPM is only required to provide the following
   # properties:
   def failure_safe_properties(tpm2_properties)
-    # Translate the TPM_PT_MANUFACTURER number into the TCG-regisred ID strings
-    #   (registry at: https://trustedcomputinggroup.org/vendor-id-registry/)
-    tpm2_manufacturer_str =
-      uint32_to_s(tpm2_properties['TPM_PT_MANUFACTURER'])
-
     {
-      manufacturer:          tpm2_manufacturer_str,
-      manufacturer_numeric:  tpm2_properties['TPM_PT_MANUFACTURER'],
-      vendor_string_1:       tpm2_properties['TPM_PT_VENDOR_STRING_1'],
-      vendor_string_2:       tpm2_properties['TPM_PT_VENDOR_STRING_2'],
-      vendor_string_3:       tpm2_properties['TPM_PT_VENDOR_STRING_3'],
-      vendor_string_4:       tpm2_properties['TPM_PT_VENDOR_STRING_4'],
-      tpm_type:              tpm2_properties['TPM_PT_VENDOR_TPM_TYPE'],
-      firmware_version_1:    tpm2_properties['TPM_PT_FIRMWARE_VERSION_1'],
-      firmware_version_2:    tpm2_properties['TPM_PT_FIRMWARE_VERSION_2']
+      'manufacturer'         => decode_uint32_string(
+                                  tpm2_properties['TPM_PT_MANUFACTURER']
+                                ),
+      'manufacturer_numeric' => tpm2_properties['TPM_PT_MANUFACTURER'],
+      'vendor_string_1'      => tpm2_properties['TPM_PT_VENDOR_STRING_1'],
+      'vendor_string_2'      => tpm2_properties['TPM_PT_VENDOR_STRING_2'],
+      'vendor_string_3'      => tpm2_properties['TPM_PT_VENDOR_STRING_3'],
+      'vendor_string_4'      => tpm2_properties['TPM_PT_VENDOR_STRING_4'],
+      'tpm_type'             => tpm2_properties['TPM_PT_VENDOR_TPM_TYPE'],
+      'firmware_version'     => tpm2_firmware_version(
+                                  tpm2_properties['TPM_PT_FIRMWARE_VERSION_1'],
+                                  tpm2_properties['TPM_PT_FIRMWARE_VERSION_2']
+                                ),
+      'firmware_version_1'   => tpm2_properties['TPM_PT_FIRMWARE_VERSION_1'],
+      'firmware_version_2'   => tpm2_properties['TPM_PT_FIRMWARE_VERSION_2']
     }
   end
 
@@ -72,7 +82,7 @@ class Facter::TPM2::Util
     properties_fixed = YAML.safe_load(yaml)
 
     result = {
-      vendor: failure_safe_properties(properties_fixed)
+      'vendor' => failure_safe_properties(properties_fixed)
     }
     result
   end
