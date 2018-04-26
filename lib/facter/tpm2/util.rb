@@ -8,10 +8,12 @@ module Facter; end
 #   reporting TPM 2.0 details
 module Facter::TPM2; end
 
-# Utilities for detecting and reporting TPM2 details
+# Utilities for detecting and reporting TPM2 information
 #
-# @note Requires:
-#   - `tpm2-tools` ~> 3.0.3 or later
+# @note This class requires the following software to be installed on the
+#   underlying operating system:
+#   - `tpm2-tools` ~> 3.0 (tested with 3.0.3)
+#   - (probably) `tpm2-abrmd` ~> 1.2 (tested with 1.2.0)
 #   - `tpm2-tools` (and probably `tpm2-abrmd`) must be configured to access TPM
 class Facter::TPM2::Util
   def initialize
