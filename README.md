@@ -2,21 +2,37 @@
 
 #### Table of Contents
 
-1. [Description](#description)
-2. [Setup - The basics of getting started with tpm](#setup)
-    * [What tpm affects](#what-tpm-affects)
-    * [Setup requirements](#setup-requirements)
-    * [Beginning with the tpm](#beginning-with-the-tpm-module)
-3. [Usage - Configuration options and additional functionality](#usage)
-4. [Reference - An under-the-hood peek at what the module is doing and how](#reference)
-5. [Limitations - OS compatibility, etc.](#limitations)
-6. [Development - Guide for contributing to the module](#development)
-    * [Acceptance Tests - Beaker env variables](#acceptance-tests)
+<!-- vim-markdown-toc GFM -->
 
+* [Description](#description)
+  * [For TPM 1.2](#for-tpm-12)
+  * [For TPM 2.0](#for-tpm-20)
+    * [Limitations](#limitations)
+    * [TODO:](#todo)
+  * [This is a SIMP module](#this-is-a-simp-module)
+* [Setup](#setup)
+  * [What tpm affects](#what-tpm-affects)
+* [> We recommend using the simulator..."](#-we-recommend-using-the-simulator)
+    * [For TPM 1.2](#for-tpm-12-1)
+    * [For TPM 2.0](#for-tpm-20-1)
+  * [Setup Requirements](#setup-requirements)
+  * [Beginning with the TPM module](#beginning-with-the-tpm-module)
+* [Usage](#usage)
+  * [Ownership](#ownership)
+  * [PKCS#11](#pkcs11)
+  * [Trusted Boot](#trusted-boot)
+    * [Locking the kernel](#locking-the-kernel)
+* [Reference](#reference)
+* [Limitations](#limitations-1)
+  * [IMA](#ima)
+* [Development](#development)
+  * [Acceptance tests](#acceptance-tests)
+
+<!-- vim-markdown-toc -->
 
 ## Description
 
-### For TPM 1.2:
+### For TPM 1.2
 This module manages a TPM, including taking ownership and enabling IMA. You must
 take ownership of a TPM to load and unload certs, use it as a PKCS #11
 interface, or to use SecureBoot or IMA.
@@ -39,32 +55,54 @@ library to interact with the command line. This module also drops the owner
 password in the Puppet `$vardir` to make interacting with trousers in facts
 possible.
 
-### TPM 2.0
+### For TPM 2.0
 
 This module can be used to set the owner and endorsement hierarchy passwords
-and lock out password on TPM 2.0.
+and lock-out password for TPM 2.0.
 
-Limitations:  It currently only works for a system with one TPM and can not be used to
-  unset the password.
+#### Limitations
 
-It will create a file called owned in the /sys/class/tpm/<tpm name> directory to indicate that
-the TPM is owned.  To reset the passwords the Password must be cleared and this file removed.
+* It currently only works for a system with one TPM and cannot be used to unset
+  the password.
 
-At the time this was written, tpm2-tools/tpm2-tss version 1.X were all that was available in
-the CentOS/base repo. The [project page for tpm2-tools](https://github.com/tpm2-software/tpm2-tools)
-is on version 3.0 which is more robust and includes the capability to check the status of the tpm
-ownership.  When this available the module will be updated so the use of the owned file is not needed.
+* It will create a file called owned in the `/sys/class/tpm/<tpm name>`
+  directory to indicate that the TPM is owned.
+  * To reset the passwords, the Password must be cleared _and_ this file removed.
+
+#### TODO:
+
+At the time this was written, tpm2-tools/tpm2-tss version 1.X were all that was
+available in the CentOS/base repo. The [upstream tpm2-tools
+project][tpm2-tools] is on version 3.0, which is more robust and includes the
+capability to check the status of the tpm ownership.  When this available, the
+module will be updated so that:
+* the use of the owned file under `/sys/class/tpm/<tpm name>` is not needed
+* TPM 2.0 interactions will be handled via the TAB/RM instead of directly
+  accessing the local TPM hardware device
+
+[tpm2-tools]:      https://github.com/tpm2-software/tpm2-tools
+[tpm2-tools-wiki]: https://github.com/tpm2-software/tpm2-tools/wiki/Getting-Started
+[tpm2sim]:         https://sourceforge.net/projects/ibmswtpm2/
+[simp-nsa-gh]:     https://github.com/NationalSecurityAgency/
 
 ### This is a SIMP module
 
-This module is a component of the [System Integrity Management Platform](https://github.com/NationalSecurityAgency/SIMP), a compliance-management framework built on Puppet.
+This module is a component of the [System Integrity Management
+Platform][simp-nsa-gh] (SIMP), a compliance-management framework built on
+Puppet.
 
-If you find any issues, they may be submitted to our [bug tracker](https://simp-project.atlassian.net/).
+If you find any issues, they may be submitted to our [bug
+tracker](https://simp-project.atlassian.net/).
 
-This module is optimally designed for use within a larger SIMP ecosystem, but it can be used independently:
+This module is optimally designed for use within a larger SIMP ecosystem, but
+it can be used independently:
 
- * When included within the SIMP ecosystem, security compliance settings will be managed from the Puppet server.
- * If used independently, all SIMP-managed security subsystems are disabled by default and must be explicitly opted into by administrators.  Please review the `$client_nets`, `$enable_*` and `$use_*` parameters in `manifests/init.pp` for details.
+ * When included within the SIMP ecosystem, security compliance settings will
+   be managed from the Puppet server.
+ * If used independently, settings that SIMP manages globally are set
+   to reasonably safe defaults in order to minimize the potential for
+   disruption. Please review the `$package_ensure` parameter in
+   `manifests/init.pp` for details.
 
 
 ## Setup
@@ -82,6 +120,15 @@ This module is optimally designed for use within a larger SIMP ecosystem, but it
 --------------------------------------------------------------------------------
 
 --------------------------------------------------------------------------------
+> **WARNING** _(From the [tpm2-tools wiki][tpm2-tools-wiki]:)_
+>
+> "We **don't recommend testing, development or learning against a real TPM.**
+> For example, you could inadvertently lock something in NV ram that is very
+> difficult/impossible to erase or wear out NV ram with too many write cycles.
+> We recommend [using the simulator][tpm2sim]..."
+--------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------
 > **WARNING**
 >
 > Inserting poorly-formed or incorrect policy into the IMA policy file could
@@ -91,7 +138,10 @@ This module is optimally designed for use within a larger SIMP ecosystem, but it
 
 --------------------------------------------------------------------------------
 
+#### For TPM 1.2
+
 This module will:
+
 * Install `tpm-tools` and `trousers`
 * Enable the `tcsd` service
 * (*OPTIONAL*) Take ownership of the TPM
@@ -100,6 +150,18 @@ This module will:
   * (*OPTIONAL*) Manage the IMA policy (BROKEN - See Limitations)
 * (*OPTIONAL*) Install `tboot`, create policy, and add grub entry
 
+
+#### For TPM 2.0
+
+This module will:
+
+* Install `tpm-tools` and `trousers`
+* Enable the `tcsd` service
+* (*OPTIONAL*) Take ownership of the TPM
+  * The password will be in a flat file in `$vardir/simp`
+* (*OPTIONAL*) Enable IMA on the host
+  * (*OPTIONAL*) Manage the IMA policy (BROKEN - See Limitations)
+* (*OPTIONAL*) Install `tboot`, create policy, and add grub entry
 
 ### Setup Requirements
 
