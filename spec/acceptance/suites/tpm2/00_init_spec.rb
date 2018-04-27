@@ -2,6 +2,7 @@ require 'spec_helper_acceptance'
 
 test_name 'tpm::tpm2::install class'
 install_tpm2_0_tools
+
 describe 'tpm::tpm2::install class' do
 
   let(:manifest) { <<-EOS
