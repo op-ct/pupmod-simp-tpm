@@ -1,6 +1,10 @@
 require 'spec_helper'
+require 'facter/tpm'
+require 'facter/tpm/util'
 
 describe 'tpm', :type => :fact do
+  MOCHA_WARNING = 'Breaks during `rake spec` but not `rspec`; remove mocha from the rest of the module before resuming'
+
   before :each do
     Facter.clear
     Facter.clear_messages
@@ -8,7 +12,7 @@ describe 'tpm', :type => :fact do
 
   context 'has_tpm fact is false' do
     it 'should return nil' do
-      allow(Facter.fact(:tpm)).to receive(:value).and_return nil
+      allow(Facter.fact(:has_tpm)).to receive(:value).and_return false
       expect(Facter.fact(:tpm).value).to eq nil
     end
   end
@@ -18,6 +22,7 @@ describe 'tpm', :type => :fact do
       allow(Facter.fact(:has_tpm)).to receive(:value).and_return true
       allow(Facter.fact(:tpm_version)).to receive(:value).and_return 'tpm1'
       allow(Facter::Core::Execution).to receive(:which).with('tpm_version').and_return nil
+      allow(Facter::Core::Execution).to receive(:execute).with('tpm_version', :timeout => 15).and_return nil
       expect(Facter.fact(:tpm).value).to eq nil
     end
   end
@@ -30,18 +35,17 @@ describe 'tpm', :type => :fact do
 
       # Just need something that actually exists on the current FS
       allow(Facter::Core::Execution).to receive(:which).with('tpm_version').and_return Dir.pwd
+      # Just stops the actual command from executing
+      allow(Facter::Core::Execution).to receive(:execute).with('tpm_version', :timeout => 15).and_return(File.read('spec/files/tpm/tpm_version.txt'))
     end
 
     it 'should be a structured fact with the prescribed structure' do
-      require 'facter/tpm/util'
-
+      skip MOCHA_WARNING
       fact = Facter::TPM::Util.new('spec/files/tpm')
       allow(Facter::TPM::Util).to receive(:new).with('/sys/class/tpm/tpm0').and_return fact
       expect(Facter.fact(:tpm).value).to include('status','version','pubek','sys_path')
     end
   end
-
-  require 'facter/tpm/util'
 
   describe Facter::TPM::Util do
 
@@ -53,6 +57,8 @@ describe 'tpm', :type => :fact do
     describe '.get_pubek_owned' do
       context 'with a well-known owner password' do
         it 'should return the results from the tpm_getpubek command' do
+          allow(File).to receive(:exists?).with('/dev/null/simp/tpm_ownership_owner_pass').and_return true
+          allow(Facter::Core::Execution).to receive(:execute).with('cat /dev/null/simp/tpm_ownership_owner_pass 2> /dev/null').and_return('twentycharacters0000')
           out = File.read('spec/files/tpm/tpm_getpubek.txt')
           allow(Facter::Core::Execution).to receive(:execute).with('tpm_getpubek -z', :timeout => 15).and_return out
 

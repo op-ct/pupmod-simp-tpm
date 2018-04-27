@@ -20,15 +20,15 @@ describe 'tpm_version', :type => :fact do
     end
 
     it 'should return tpm1 if link exists and no MSFT in name' do
-      File.stubs(:readlink).with('/tpm0').returns '../xyz/foo/bar'
+      allow(File).to receive(:readlink).with('/tpm0').and_return '../xyz/foo/bar'
       expect(Facter.fact(:tpm_version).value).to eq  'tpm1'
     end
   end
 
   context 'the link file is not a link to the device' do
     before (:each) {
-      Dir.stubs(:glob).with('/sys/class/tpm/tpm*').returns ['/tpm0']
-      File.stubs(:symlink?).with('/tpm0').returns false
+      allow(Dir).to receive(:glob).with('/sys/class/tpm/tpm*').and_return ['/tpm0']
+      allow(File).to receive(:symlink?).with('/tpm0').and_return false
     }
     it 'should return unknown' do
       expect(Facter.fact(:tpm_version).value).to eq 'unknown'
@@ -37,7 +37,7 @@ describe 'tpm_version', :type => :fact do
 
   context 'There is nothing in the directory' do
     before (:each) {
-      Dir.stubs(:glob).with('/sys/class/tpm/tpm*').returns []
+      allow(Dir).to receive(:glob).with('/sys/class/tpm/tpm*').and_return []
     }
     it 'should return unknown' do
       expect(Facter.fact(:tpm_version).value).to eq 'unknown'
