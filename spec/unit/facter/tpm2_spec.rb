@@ -20,6 +20,7 @@ describe 'tpm2', :type => :fact do
       it 'should return nil' do
         # Just need something that actually exists on the current FS
         allow(Facter::Core::Execution).to receive(:which).with('tpm_version').and_return nil
+        allow(Facter::Core::Execution).to receive(:execute).with(%r{#{@l_bin}/?tpm2_pcrlist -s$}).and_return nil
         allow(Facter::Core::Execution).to receive(:execute).with(%r{.*/?tpm_version$}, :timeout => 15).and_return nil
         allow(Facter.fact(:tpm_version)).to receive(:value).and_return 'tpm1'
         expect(Facter.fact(:tpm2).value).to eq nil
@@ -49,5 +50,4 @@ describe 'tpm2', :type => :fact do
       end
     end
   end
-
 end

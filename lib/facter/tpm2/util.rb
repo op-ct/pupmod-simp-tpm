@@ -8,13 +8,17 @@ module Facter; end
 #   reporting TPM 2.0 details
 module Facter::TPM2; end
 
-# Utilities for detecting and reporting TPM2 information
+# Utilities for detecting and reporting TPM 2.0 information
 #
 # @note This class requires the following software to be installed on the
 #   underlying operating system:
 #   - `tpm2-tools` ~> 3.0 (tested with 3.0.3)
 #   - (probably) `tpm2-abrmd` ~> 1.2 (tested with 1.2.0)
 #   - `tpm2-tools` (and probably `tpm2-abrmd`) must be configured to access TPM
+#
+# @note TPM devices are assumed to follow the TCG PC Client PTP Specification
+#   (https://trustedcomputinggroup.org/pc-client-platform-tpm-profile-ptp-specification/)
+#
 class Facter::TPM2::Util
   def initialize
     @prefix = Facter::TPM2::Util.tpm2_tools_prefix
@@ -23,6 +27,7 @@ class Facter::TPM2::Util
   # Facter executes a CLI command using the tpm2-tools path
   # @param [String] cmd The CLI command string for Facter to execute
   def exec(cmd)
+    Facter.debug "executing '#{File.join(@prefix, cmd)}'"
     Facter::Core::Execution.execute(File.join(@prefix, cmd))
   end
 
@@ -48,25 +53,30 @@ class Facter::TPM2::Util
     (s1.scan(/.{4}/) + s2.scan(/.{4}/)).map{|x| x.hex }.join('.')
   end
 
-  # When in failure mode, the TPM is only required to provide the following
-  # properties:
+  def tpm2_vendor_strings( tpm2_properties )
+    [
+       tpm2_properties['TPM_PT_VENDOR_STRING_1']['as string'],
+       tpm2_properties['TPM_PT_VENDOR_STRING_2']['as string'],
+       tpm2_properties['TPM_PT_VENDOR_STRING_3']['as string'],
+       tpm2_properties['TPM_PT_VENDOR_STRING_4']['as string'],
+    ]
+  end
+
+
+  # The TPM is only required to provide the following properties when in
+  # failure mode:
+  #
   def failure_safe_properties(tpm2_properties)
     {
-      'manufacturer'         => decode_uint32_string(
-                                  tpm2_properties['TPM_PT_MANUFACTURER']
-                                ),
-      'manufacturer_numeric' => tpm2_properties['TPM_PT_MANUFACTURER'],
-      'vendor_string_1'      => tpm2_properties['TPM_PT_VENDOR_STRING_1'],
-      'vendor_string_2'      => tpm2_properties['TPM_PT_VENDOR_STRING_2'],
-      'vendor_string_3'      => tpm2_properties['TPM_PT_VENDOR_STRING_3'],
-      'vendor_string_4'      => tpm2_properties['TPM_PT_VENDOR_STRING_4'],
-      'tpm_type'             => tpm2_properties['TPM_PT_VENDOR_TPM_TYPE'],
-      'firmware_version'     => tpm2_firmware_version(
-                                  tpm2_properties['TPM_PT_FIRMWARE_VERSION_1'],
-                                  tpm2_properties['TPM_PT_FIRMWARE_VERSION_2']
-                                ),
-      'firmware_version_1'   => tpm2_properties['TPM_PT_FIRMWARE_VERSION_1'],
-      'firmware_version_2'   => tpm2_properties['TPM_PT_FIRMWARE_VERSION_2']
+      'manufacturer'     => decode_uint32_string(
+                              tpm2_properties['TPM_PT_MANUFACTURER']
+                            ),
+      'vendor_strings'   => tpm2_vendor_strings( tpm2_properties ),
+      'firmware_version' => tpm2_firmware_version(
+                              tpm2_properties['TPM_PT_FIRMWARE_VERSION_1'],
+                              tpm2_properties['TPM_PT_FIRMWARE_VERSION_2']
+                            ),
+      'tpm2_getcap'      => { 'properties-fixed' => tpm2_properties }
     }
   end
 
@@ -74,16 +84,22 @@ class Facter::TPM2::Util
   # @return [nil] if TPM data cannot be retrieved.
   # @return [
   def build_structured_fact
+
     # fail fast
-    return nil unless @prefix                 # must have tpm2-tools installed
-    return nil unless exec('tpm2_pcrlist -s') # tpm2-tools must report on TPM
+    unless @prefix                 # must have tpm2-tools installed
+      Facter.debug 'path to tpm2-tools not found'
+      return nil
+    end
+
+    unless exec('tpm2_pcrlist -s') # tpm2-tools must report on TPM
+      Facter.debug 'no information returned from `tpm2_pcrlist -s`'
+      return nil
+    end
 
     yaml = exec('tpm2_getcap -c properties-fixed')
     properties_fixed = YAML.safe_load(yaml)
 
-    result = {
-      'vendor' => failure_safe_properties(properties_fixed)
-    }
+    result = failure_safe_properties(properties_fixed)
     result
   end
 
