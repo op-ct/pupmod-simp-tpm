@@ -53,8 +53,6 @@ describe Facter::TPM2::Util do
     context "when tpm2-tools are installed" do
       before :each do
         allow(File).to receive(:executable?).with("#{@l_bin}/tpm2_pcrlist").and_return( true )
-        files = Dir.glob( File.expand_path( '../../../../files/tpm2/mocks/tpm2_getcap_-c_properties-fixed/*.yaml', __FILE__) )
-        @yaml_strings = files.map{ |file| File.read file }
       end
 
       context 'when tpm2-tools cannot query the TABRM' do
@@ -70,13 +68,19 @@ describe Facter::TPM2::Util do
           allow(Facter::Core::Execution).to receive(:execute).with("#{@l_bin}/tpm2_pcrlist -s").and_return(
             "Supported Bank/Algorithm: sha1(0x0004) sha256(0x000b) sha384(0x000c)\n"
           )
-          allow(Facter::Core::Execution).to receive(:execute).with("#{@l_bin}/tpm2_getcap -c properties-fixed").and_return(
-            File.read File.expand_path( '../../../../files/tpm2/mocks/tpm2_getcap_-c_properties-fixed/nuvoton-ncpt6xx-fbfc85e.yaml', __FILE__)
-          )
         end
-        it 'should populate result' do
-          util = Facter::TPM2::Util.new
-          expect( util.build_structured_fact.is_a? Hash ).to be true
+        it 'should populate result with a correct data structure' do
+          files = Dir.glob( File.expand_path( '../../../../files/tpm2/mocks/tpm2_getcap_-c_properties-fixed/*.yaml', __FILE__) )
+          yaml_strings = files.map{ |file| File.read file }
+          yaml_strings.each do |yaml_string|
+            allow(Facter::Core::Execution).to receive(:execute).with("#{@l_bin}/tpm2_getcap -c properties-fixed").and_return( yaml_string )
+            util = Facter::TPM2::Util.new
+            fact = util.build_structured_fact
+            expect(fact).to be_a(Hash)
+            expect(fact['manufacturer']).to match(/.{0,4}/)
+            expect(fact['firmware_version']).to match(/^\d+\.\d+\.\d+\.\d+$/)
+            expect(fact['tpm2_getcap']['properties-fixed']).to be_a(Hash)
+          end
         end
       end
       context 'when tpm2-tools can query the TABRM' do
@@ -118,4 +122,4 @@ describe Facter::TPM2::Util do
 ###      end
 ###    end
 ###  end
-end
+###end
