@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe 'tpm::ima' do
+describe 'ima' do
   on_supported_os.each do |os, os_facts|
     context "on #{os}" do
 
@@ -13,9 +13,9 @@ describe 'tpm::ima' do
 
       context 'with default params' do
         it { is_expected.to compile.with_all_deps }
-        it { is_expected.to create_class('tpm::ima') }
+        it { is_expected.to create_class('ima') }
         it { is_expected.not_to contain_reboot_notify('ima_log') }
-        # it { is_expected.not_to contain_class('::tpm::ima::policy') }
+        # it { is_expected.not_to contain_class('::ima::policy') }
 
         it do
           is_expected.to contain_mount('/sys/kernel/security').with(
@@ -48,7 +48,7 @@ describe 'tpm::ima' do
           manage_policy: true,
         }}
         it { is_expected.to compile.with_all_deps }
-        it { is_expected.to contain_class('tpm::ima::policy') }
+        it { is_expected.to contain_class('ima::policy') }
       end
 
       context 'with kernel verson >= 3.13' do

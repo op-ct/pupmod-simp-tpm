@@ -5,7 +5,7 @@
 #   Enable IMA on the system
 #
 # @param manage_policy
-#   Include the ``tpm::ima::policy`` Class
+#   Include the ``ima::policy`` Class
 #
 #   * Please read the documentation for that class **carefully**, as it can
 #     cause live filesystems to become read-only until a reboot.
@@ -45,7 +45,7 @@
 #   The size of ``/sys/kernel/security/ima/ascii_runtime_measurements``, in
 #   bytes, that will cause a reboot notification will be sent to the user.
 #
-class tpm::ima (
+class ima (
   Boolean              $enable          = true,
   Boolean              $manage_appraise = false,
   Boolean              $manage_policy   = false,
@@ -112,11 +112,11 @@ class tpm::ima (
 
     # Be very careful with this class it could make the system read-only
     if $manage_policy {
-      include '::tpm::ima::policy'
+      include '::ima::policy'
     }
 
     if $manage_appraise {
-      include '::tpm::ima::appraise'
+      include '::ima::appraise'
     }
 
     if $facts['ima_log_size'] {
