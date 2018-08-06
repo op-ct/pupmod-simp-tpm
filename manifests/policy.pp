@@ -148,7 +148,7 @@ class ima::policy (
       ensure  => file,
       owner   => 'root',
       mode    => '0640',
-      content => template('ima_policy.conf.erb'),
+      content => template("${module_name}/ima_policy.conf.erb"),
       require => File['/etc/ima'],
       notify  => Exec['load_ima_policy']
     }
