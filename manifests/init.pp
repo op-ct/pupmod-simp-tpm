@@ -52,7 +52,7 @@ class ima (
   Stdlib::AbsolutePath $mount_dir       = '/sys/kernel/security',
   Boolean              $ima_tcb         = true,
   Boolean              $ima_audit       = false,
-  Tpm::Ima::Template   $ima_template    = 'ima-ng',
+  Ima::Template        $ima_template    = 'ima-ng',
   String[1]            $ima_hash        = 'sha256',
   Integer[1]           $log_max_size    = 30000000
 ) {
