@@ -54,8 +54,7 @@ class ima (
   Boolean              $ima_audit       = false,
   Tpm::Ima::Template   $ima_template    = 'ima-ng',
   String[1]            $ima_hash        = 'sha256',
-  Integer[1]           $log_max_size    = 30000000,
-  Simplib::PackageEnsure $package_ensure = $::simp_options::package_ensure
+  Integer[1]           $log_max_size    = 30000000
 ) {
 
   if $enable {

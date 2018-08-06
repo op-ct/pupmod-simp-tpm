@@ -159,7 +159,7 @@ class ima::policy (
       file { '/usr/lib/systemd/system/import_ima_rules.service':
         ensure => file,
         mode   => '0644',
-        source => 'puppet:///modules/tpm/import_ima_rules.service'
+        source => "puppet:///modules/${module_name}/import_ima_rules.service"
       }
       service { 'import_ima_rules.service':
         ensure  => stopped,
@@ -176,7 +176,7 @@ class ima::policy (
       file { '/etc/init.d/import_ima_rules':
         ensure => file,
         mode   => '0755',
-        source => 'puppet:///modules/tpm/import_ima_rules'
+        source => "puppet:///modules/${module_name}/import_ima_rules"
       }
       service { 'import_ima_rules':
         ensure  => stopped,

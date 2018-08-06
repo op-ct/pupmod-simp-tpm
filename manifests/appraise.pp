@@ -9,7 +9,7 @@
 #
 # (TODO: check for this and set if possible)
 #
-# Then include the ``tpm`` module in your classes and set the following in Hiera:
+# Then include the ``ima`` module in your classes and set the following in Hiera:
 #
 # @example enable IMA via Hiera
 #   ima: true
@@ -78,7 +78,7 @@
 # @author SIMP Team  <https://simp-project.com/>
 #
 class ima::appraise(
-  Simplib::PackageEnsure $package_ensure = $::tpm::package_ensure,
+  Simplib::PackageEnsure $package_ensure = $::ima::package_ensure,
   Boolean                $enable         = true,
   Stdlib::AbsolutePath   $relabel_file   = "${facts['puppet_vardir']}/simp/.ima_relabel",
   Stdlib::AbsolutePath   $scriptdir      = '/usr/local/bin',
